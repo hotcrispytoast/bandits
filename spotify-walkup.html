@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>T-Ball Walk-Up Songs (Spotify)</title>
+<style>
+:root{--bg:#f5f6f4;--card:#fff;--ink:#1a1f16;--sub:#5b6358;--line:#e1e4dd;--accent:#1db954;--accent-ink:#04210e;--danger:#b3432b;--chip:#eef1ea;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12140f;--card:#1c2016;--ink:#eef0e9;--sub:#9aa393;--line:#2c3226;--accent:#1db954;--accent-ink:#04210e;--chip:#242a1d;}}
+*{box-sizing:border-box;}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%;}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
+header{position:sticky;top:0;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 12px;background:var(--bg);border-bottom:1px solid var(--line);z-index:5;}
+h1{font-size:1.2rem;margin:0 0 2px;}
+.sub{color:var(--sub);font-size:.82rem;}
+main{padding:16px;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 90px);max-width:640px;margin:0 auto;}
+.toolbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+button{font:inherit;cursor:pointer;}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 12px;border-radius:10px;font-size:.85rem;}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px;}
+input[type=text],input[type=number],input[type=password]{padding:9px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:.9rem;width:100%;}
+label{font-size:.72rem;color:var(--sub);display:block;margin:8px 0 3px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;}
+.pcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:6px;min-height:130px;}
+.num{font-size:1.5rem;font-weight:700;color:var(--accent);}
+.name{font-weight:600;font-size:1rem;}
+.song{font-size:.75rem;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.play{margin-top:auto;background:var(--accent);color:var(--accent-ink);border:none;border-radius:10px;padding:10px;font-weight:600;}
+.chip{background:var(--chip);border-radius:999px;padding:6px 10px;font-size:.78rem;display:inline-flex;align-items:center;gap:6px;cursor:pointer;}
+.sw{width:34px;height:20px;border-radius:999px;background:var(--line);position:relative;transition:.15s;}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--card);transition:.15s;}
+.sw.on{background:var(--accent);}
+.sw.on::after{left:16px;background:var(--accent-ink);}
+.status{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:999px;font-size:.8rem;opacity:0;pointer-events:none;transition:.25s;z-index:20;max-width:90vw;text-align:center;}
+.status.show{opacity:.95;}
+.searchres{max-height:220px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;margin-top:6px;}
+.sres-row{padding:8px;border-bottom:1px solid var(--line);font-size:.82rem;display:flex;justify-content:space-between;gap:8px;align-items:center;}
+.sres-row button{font-size:.75rem;padding:4px 8px;}
+.del{align-self:flex-end;background:none;border:none;color:var(--danger);font-size:.72rem;}
+.hidden{display:none !important;}
+.note{font-size:.75rem;color:var(--sub);margin-top:4px;}
+</style>
+</head>
+<body>
+<header>
+  <h1>⚾ Walk-Up Songs</h1>
+  <div class="sub" id="statusLine">Not connected to Spotify</div>
+</header>
+<main>
+  <div class="card" id="setupCard">
+    <strong>Setup</strong>
+    <label>Spotify Client ID</label>
+    <input type="text" id="clientId" placeholder="paste your Client ID">
+    <div class="note">Redirect URI to register in your Spotify app: <code id="redirUri"></code></div>
+    <button class="btn primary" id="loginBtn" style="margin-top:10px;">Log in with Spotify</button>
+    <button class="btn" id="logoutBtn" style="margin-top:10px;display:none;">Log out</button>
+  </div>
+
+  <div id="appArea" class="hidden">
+    <div class="toolbar">
+      <button class="btn" id="editToggle">Edit roster</button>
+      <span class="chip" id="simToggle"><span class="sw" id="simSw"></span>Song + intro together</span>
+      <span class="chip" id="duckToggle"><span class="sw" id="duckSw"></span>Duck volume while talking</span>
+    </div>
+    <div class="toolbar">
+      <button class="btn" id="exportBtn">⬇ Save backup</button>
+      <button class="btn" id="importBtn">⬆ Load backup</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none;">
+    </div>
+    <div class="card hidden" id="addCard">
+      <label>New player name</label>
+      <input type="text" id="newName" placeholder="Bennett Lucas">
+      <label>Jersey #</label>
+      <input type="number" id="newNum" placeholder="3">
+      <button class="btn primary" id="addBtn" style="margin-top:10px;">+ Add player</button>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+</main>
+<div class="status" id="toast"></div>
+
+<script src="https://sdk.scdn.co/spotify-player.js"></script>
+<script>
+const REDIRECT_URI = location.origin + location.pathname;
+document.getElementById('redirUri').textContent = REDIRECT_URI;
+const SCOPES = 'streaming user-read-email user-read-private user-modify-playback-state';
+
+let STATE = JSON.parse(localStorage.getItem('walkup_state')||'{"settings":{"simultaneous":false,"duck":true},"players":[]}');
+let editMode=false, player=null, deviceId=null, searchTarget=null;
+
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),2500);}
+function save(){localStorage.setItem('walkup_state',JSON.stringify(STATE));}
+function b64url(buf){return btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+async function sha256(str){return await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));}
+function randStr(len){const a=new Uint8Array(len);crypto.getRandomValues(a);return Array.from(a,b=>('0'+b.toString(16)).slice(-2)).join('').slice(0,len);}
+
+async function login(){
+  const clientId=document.getElementById('clientId').value.trim();
+  if(!clientId){toast('Enter your Spotify Client ID first');return;}
+  localStorage.setItem('sp_client_id',clientId);
+  const verifier=randStr(64);
+  localStorage.setItem('sp_verifier',verifier);
+  const challenge=b64url(await sha256(verifier));
+  const params=new URLSearchParams({client_id:clientId,response_type:'code',redirect_uri:REDIRECT_URI,scope:SCOPES,code_challenge_method:'S256',code_challenge:challenge});
+  location.href='https://accounts.spotify.com/authorize?'+params.toString();
+}
+
+async function exchangeCode(code){
+  const clientId=localStorage.getItem('sp_client_id');
+  const verifier=localStorage.getItem('sp_verifier');
+  const body=new URLSearchParams({client_id:clientId,grant_type:'authorization_code',code,redirect_uri:REDIRECT_URI,code_verifier:verifier});
+  const res=await fetch('https://accounts.spotify.com/api/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
+  const data=await res.json();
+  if(data.access_token){ storeTokens(data); history.replaceState({},'',REDIRECT_URI); return true; }
+  toast('Login failed: '+(data.error_description||data.error||'unknown error'));
+  return false;
+}
+function storeTokens(d){
+  localStorage.setItem('sp_access_token', d.access_token);
+  localStorage.setItem('sp_expires_at', Date.now()+ (d.expires_in-60)*1000);
+  if(d.refresh_token) localStorage.setItem('sp_refresh_token', d.refresh_token);
+}
+async function refreshToken(){
+  const clientId=localStorage.getItem('sp_client_id');
+  const rt=localStorage.getItem('sp_refresh_token');
+  if(!rt) return null;
+  const body=new URLSearchParams({client_id:clientId,grant_type:'refresh_token',refresh_token:rt});
+  const res=await fetch('https://accounts.spotify.com/api/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
+  const data=await res.json();
+  if(data.access_token) storeTokens(data);
+  return data.access_token||null;
+}
+async function getToken(){
+  const exp=+localStorage.getItem('sp_expires_at')||0;
+  if(Date.now()>exp) return await refreshToken();
+  return localStorage.getItem('sp_access_token');
+}
+function loggedIn(){ return !!localStorage.getItem('sp_refresh_token'); }
+
+document.getElementById('loginBtn').onclick=login;
+document.getElementById('logoutBtn').onclick=()=>{ ['sp_access_token','sp_expires_at','sp_refresh_token','sp_client_id','sp_verifier'].forEach(k=>localStorage.removeItem(k)); location.reload(); };
+
+window.onSpotifyWebPlaybackSDKReady=async ()=>{
+  if(!loggedIn()) return;
+  player=new Spotify.Player({name:'T-Ball Walk-Up Songs', getOAuthToken:cb=>getToken().then(cb), volume:1});
+  player.addListener('ready',({device_id})=>{ deviceId=device_id; document.getElementById('statusLine').textContent='Connected — ready to play'; toast('Spotify connected'); });
+  player.addListener('not_ready',()=>{ document.getElementById('statusLine').textContent='Device offline'; });
+  player.addListener('authentication_error',()=>{ toast('Spotify session expired — log in again'); });
+  await player.connect();
+};
+
+async function boot(){
+  const cid=localStorage.getItem('sp_client_id');
+  if(cid) document.getElementById('clientId').value=cid;
+  const url=new URL(location.href);
+  const code=url.searchParams.get('code');
+  if(code){ await exchangeCode(code); }
+  if(loggedIn()){
+    document.getElementById('loginBtn').style.display='none';
+    document.getElementById('logoutBtn').style.display='';
+    document.getElementById('appArea').classList.remove('hidden');
+    document.getElementById('statusLine').textContent='Connecting to Spotify…';
+  }
+  render();
+}
+
+function escAttr(s){return (s===undefined||s===null)?'':String(s).replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+
+function render(){
+  document.getElementById('simSw').classList.toggle('on',STATE.settings.simultaneous);
+  document.getElementById('duckSw').classList.toggle('on',STATE.settings.duck);
+  document.getElementById('addCard').classList.toggle('hidden',!editMode);
+  const grid=document.getElementById('grid'); grid.innerHTML='';
+  STATE.players.forEach((p,i)=>{
+    const c=document.createElement('div'); c.className='pcard';
+    if(editMode){
+      c.innerHTML=`<button class="del" data-del="${i}">Remove ✕</button>
+        <label>Name</label><input type="text" value="${escAttr(p.name)}" data-field="name" data-i="${i}">
+        <label>Jersey #</label><input type="number" value="${escAttr(p.number)}" data-field="number" data-i="${i}">
+        <label>Walk-up song</label>
+        <div class="song">${p.trackName? '🎵 '+escAttr(p.trackName): 'None chosen'}</div>
+        <button class="btn" data-search="${i}">Search Spotify</button>
+        <div class="searchres hidden" id="res-${i}"></div>`;
+    } else {
+      c.innerHTML=`<div class="num">#${escAttr(p.number)}</div><div class="name">${escAttr(p.name)}</div>
+        <div class="song">${p.trackName? '🎵 '+escAttr(p.trackName):'No song set'}</div>
+        <button class="play" data-play="${i}">▶ Now batting…</button>`;
+    }
+    grid.appendChild(c);
+  });
+}
+
+document.getElementById('editToggle').onclick=()=>{editMode=!editMode;document.getElementById('editToggle').textContent=editMode?'Done editing':'Edit roster';render();};
+document.getElementById('addBtn').onclick=()=>{
+  const name=document.getElementById('newName').value.trim();
+  const number=document.getElementById('newNum').value.trim();
+  if(!name){toast('Enter a name first');return;}
+  STATE.players.push({name,number,trackUri:null,trackName:null});
+  document.getElementById('newName').value='';document.getElementById('newNum').value='';
+  save();render();
+};
+document.getElementById('simToggle').onclick=()=>{STATE.settings.simultaneous=!STATE.settings.simultaneous;save();render();};
+document.getElementById('duckToggle').onclick=()=>{STATE.settings.duck=!STATE.settings.duck;save();render();};
+
+document.getElementById('exportBtn').onclick=()=>{
+  const blob=new Blob([JSON.stringify(STATE,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='walkup-roster-backup.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  toast('Backup saved to your Files/Downloads');
+};
+document.getElementById('importBtn').onclick=()=>document.getElementById('importFile').click();
+document.getElementById('importFile').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const data=JSON.parse(r.result);
+      if(!data.players || !Array.isArray(data.players)) throw new Error('bad file');
+      STATE=data; save(); render();
+      toast('Roster restored from backup');
+    }catch(err){ toast('That file didn\'t look like a valid backup'); }
+  };
+  r.readAsText(f);
+  e.target.value='';
+};
+
+document.getElementById('grid').addEventListener('click', async e=>{
+  const play=e.target.closest('[data-play]'); if(play) runWalkup(STATE.players[+play.dataset.play]);
+  const del=e.target.closest('[data-del]'); if(del){STATE.players.splice(+del.dataset.del,1);save();render();}
+  const srch=e.target.closest('[data-search]'); if(srch) doSearch(+srch.dataset.search);
+  const pick=e.target.closest('[data-pick]');
+  if(pick){ const p=STATE.players[searchTarget]; p.trackUri=pick.dataset.uri; p.trackName=pick.dataset.name; save(); render(); }
+});
+document.getElementById('grid').addEventListener('input', e=>{
+  const i=e.target.dataset.i; if(i!==undefined){STATE.players[i][e.target.dataset.field]=e.target.value;}
+});
+document.getElementById('grid').addEventListener('change', e=>{ const i=e.target.dataset.i; if(i!==undefined) save(); });
+
+async function doSearch(i){
+  searchTarget=i;
+  const box=document.getElementById('res-'+i);
+  box.classList.remove('hidden'); box.innerHTML='<div class="sres-row">Type below, then tap Go</div>';
+  const q=prompt('Search Spotify for a song:');
+  if(!q) return;
+  const token=await getToken();
+  const res=await fetch('https://api.spotify.com/v1/search?type=track&limit=8&q='+encodeURIComponent(q),{headers:{Authorization:'Bearer '+token}});
+  const data=await res.json();
+  box.innerHTML='';
+  (data.tracks? data.tracks.items:[]).forEach(t=>{
+    const row=document.createElement('div'); row.className='sres-row';
+    row.innerHTML=`<span>${escAttr(t.name)} — ${escAttr(t.artists.map(a=>a.name).join(', '))}</span><button data-pick data-uri="${t.uri}" data-name="${escAttr(t.name+' — '+t.artists[0].name)}">Use</button>`;
+    box.appendChild(row);
+  });
+  if(!data.tracks || data.tracks.items.length===0) box.innerHTML='<div class="sres-row">No results</div>';
+}
+
+let voice=null;
+function pickVoice(){ const vs=speechSynthesis.getVoices(); voice = vs.find(v=>/en-US/i.test(v.lang)&&/natural|enhanced|premium/i.test(v.name)) || vs.find(v=>/en-US/i.test(v.lang)) || vs[0] || null; }
+speechSynthesis.onvoiceschanged=pickVoice; pickVoice();
+
+async function ensureActiveDevice(){
+  const token=await getToken();
+  await fetch('https://api.spotify.com/v1/me/player', {method:'PUT', headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'}, body:JSON.stringify({device_ids:[deviceId],play:false})});
+}
+async function playTrack(uri, vol){
+  if(!deviceId){toast('Spotify device not ready yet');return;}
+  const token=await getToken();
+  await player.setVolume(vol);
+  await fetch('https://api.spotify.com/v1/me/player/play?device_id='+deviceId,{method:'PUT',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({uris:[uri]})});
+}
+function rampVolume(target){
+  let v=0; const step=async()=>{ v=Math.min(target,v+0.1); await player.setVolume(v); if(v<target) requestAnimationFrame(step); };
+  step();
+}
+let deviceArmed=false;
+async function runWalkup(p){
+  if(!deviceId){toast('Waiting for Spotify to connect…');return;}
+  if(!deviceArmed){ await ensureActiveDevice(); deviceArmed=true; }
+  const text=`Now batting, number ${p.number||''}, ${p.name}`.replace(/\s+/g,' ').trim();
+  const utter=new SpeechSynthesisUtterance(text); if(voice) utter.voice=voice; utter.rate=0.95; utter.pitch=0.95;
+  const hasTrack=!!p.trackUri;
+  const duck=STATE.settings.duck && hasTrack;
+  const simultaneous=STATE.settings.simultaneous;
+  if(hasTrack && simultaneous){
+    await playTrack(p.trackUri, duck?0.25:1);
+    if(duck) utter.onend=()=>rampVolume(1);
+  } else if(hasTrack && !simultaneous){
+    utter.onend=()=>playTrack(p.trackUri,1);
+  } else if(!hasTrack){
+    toast('No song set for this player');
+  }
+  speechSynthesis.cancel(); speechSynthesis.speak(utter);
+}
+
+boot();
+</script>
+</body>
+</html>
